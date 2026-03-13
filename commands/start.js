@@ -30,7 +30,7 @@ module.exports = async (bot, msg) => {
         `📌 আপনার আইডি: ${userId}\n` +
         `📌 আপনার স্ট্যাটাস: ⏳ পেন্ডিং\n\n` +
         `✅ অনুমতি পেতে অ্যাডমিনের সাথে যোগাযোগ করুন:\n` +
-        `👤 @admin_username\n\n` +
+        `👤 @DarkByteCrew_Admin\n\n` +
         `⚠️ নোট: এই বট শুধু শিক্ষামূলক ও টেস্টিং উদ্দেশ্যে তৈরি`;
       
       await bot.sendMessage(chatId, welcomeMsg);
@@ -67,7 +67,7 @@ module.exports = async (bot, msg) => {
       // পুরনো ইউজার
       if (user.banned) {
         await bot.sendMessage(chatId, 
-          `❌ আপনাকে ব্যান করা হয়েছে! অ্যাডমিনের সাথে যোগাযোগ করুন @admin_username`
+          `❌ আপনাকে ব্যান করা হয়েছে! অ্যাডমিনের সাথে যোগাযোগ করুন @DarkByteCrew_Admin`
         );
       } else if (user.approved) {
         await bot.sendMessage(chatId, 
@@ -75,7 +75,7 @@ module.exports = async (bot, msg) => {
         );
       } else {
         await bot.sendMessage(chatId, 
-          `⏳ আপনার অনুমতি এখনও পেন্ডিং আছে। অ্যাডমিনের সাথে যোগাযোগ করুন @admin_username`
+          `⏳ আপনার অনুমতি এখনও পেন্ডিং আছে। অ্যাডমিনের সাথে যোগাযোগ করুন @DarkByteCrew_Admin`
         );
       }
     }

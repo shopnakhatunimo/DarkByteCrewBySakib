@@ -146,7 +146,7 @@ class PendingCommand {
         `• ভুল তথ্য দেওয়া হয়েছে\n` +
         `• একাধিক অ্যাকাউন্ট খোলা হয়েছে\n` +
         `• অ্যাডমিনের সিদ্ধান্ত\n\n` +
-        `📞 পুনরায় আবেদন: @admin_username`
+        `📞 পুনরায় আবেদন: @DarkByteCrew_Admin`
       );
       
       await bot.sendMessage(chatId, `✅ ${user.firstName} রিজেক্ট করা হয়েছে।`);

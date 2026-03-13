@@ -21,7 +21,7 @@ module.exports = async (bot, msg) => {
         `⛔ 𝐀𝐂𝐂𝐄𝐒𝐒 𝐃𝐄𝐍𝐈𝐄𝐃 ⛔\n\n` +
         `${userName}, আপনার এই বট ব্যবহারের অনুমতি নেই।\n\n` +
         `📋 কারণ: ${reason}\n\n` +
-        `👤 হেল্প: @admin_username`
+        `👤 হেল্প: @DarkByteCrew_Admin`
       );
     }
     
