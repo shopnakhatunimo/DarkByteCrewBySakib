@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const connectDB = require('./config/database');
 const setupBot = require('./config/bot');
+const { validateEnv } = require('./config/env');
 const NotificationService = require('./utils/notifications');
 
 // এক্সপ্রেস অ্যাপ
@@ -10,6 +11,7 @@ app.use(express.json());
 app.use(express.static('public'));
 
 // ডাটাবেস কানেক্ট
+validateEnv();
 connectDB();
 
 // বট সেটআপ
