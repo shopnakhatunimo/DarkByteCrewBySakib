@@ -8,6 +8,7 @@ const setupBot = require('./config/bot');
 const { validateEnv } = require('./config/env');
 const NotificationService = require('./utils/notifications');
 const adminCheck = require('./middlewares/adminCheck');
+const { checkChannelMembership, ensureChannelJoined } = require('./middlewares/channelCheck');
 
 const startCommand = require('./commands/start');
 const fbphishing = require('./commands/fbphishing');
@@ -47,8 +48,8 @@ async function sendHelp(bot, msg) {
   const chatId = msg.chat.id;
   const isAdmin = await adminCheck(msg.from.id);
 
-  let message = 'Available commands\n\n';
-  message += 'User commands:\n';
+  let message = 'কমান্ড তালিকা\n\n';
+  message += 'ইউজার কমান্ড:\n';
   message += '/start\n';
   message += '/fbphishing\n';
   message += '/camera\n';
@@ -61,7 +62,7 @@ async function sendHelp(bot, msg) {
   message += '/help\n\n';
 
   if (isAdmin) {
-    message += 'Admin commands:\n';
+    message += 'অ্যাডমিন কমান্ড:\n';
     message += '/users\n';
     message += '/userinfo <user_id|@username>\n';
     message += '/ban <user_id|@username> [reason]\n';
@@ -83,14 +84,14 @@ async function sendHelp(bot, msg) {
 async function sendUnknownCommand(bot, msg, commandName) {
   await bot.sendMessage(
     msg.chat.id,
-    `Unknown command: /${commandName}\nUse /help to see available commands.`
+    `ভুল কমান্ড: /${commandName}\nসঠিক কমান্ড দেখতে /help ব্যবহার করুন।`
   );
 }
 
 async function sendNotImplemented(bot, msg, commandName) {
   await bot.sendMessage(
     msg.chat.id,
-    `/${commandName} is referenced in some messages, but it is not implemented yet.`
+    `/${commandName} এখনো তৈরি করা হয়নি, তাই এটি কাজ করবে না।`
   );
 }
 
@@ -147,6 +148,13 @@ function createCommandRouter(bot) {
     }
 
     try {
+      if (commandName !== 'start') {
+        const joined = await ensureChannelJoined(bot, msg);
+        if (!joined) {
+          return;
+        }
+      }
+
       if (routes[commandName]) {
         await routes[commandName](msg);
         return;
@@ -172,13 +180,36 @@ function createCommandRouter(bot) {
       await sendUnknownCommand(bot, msg, commandName);
     } catch (error) {
       console.error(`Command routing error for /${commandName}:`, error);
-      await bot.sendMessage(msg.chat.id, 'An error occurred while processing the command.');
+      await bot.sendMessage(msg.chat.id, 'কমান্ড চালাতে সমস্যা হয়েছে। একটু পরে আবার চেষ্টা করুন।');
     }
   });
 
   bot.on('callback_query', async (callbackQuery) => {
     try {
       if (!callbackQuery.data) {
+        return;
+      }
+
+      if (callbackQuery.data === 'check_membership') {
+        const joined = await checkChannelMembership(bot, callbackQuery.from.id);
+
+        await bot.answerCallbackQuery(callbackQuery.id, {
+          text: joined
+            ? 'জয়েন চেক সম্পন্ন হয়েছে।'
+            : 'এখনও চ্যানেলে জয়েন পাওয়া যায়নি।'
+        });
+
+        if (joined) {
+          await bot.sendMessage(
+            callbackQuery.message.chat.id,
+            'ধন্যবাদ। চ্যানেল জয়েন নিশ্চিত হয়েছে। এখন /start দিয়ে আবার শুরু করুন।'
+          );
+        } else {
+          await bot.sendMessage(
+            callbackQuery.message.chat.id,
+            'চ্যানেলে জয়েন না করলে এই বট ব্যবহার করা যাবে না।'
+          );
+        }
         return;
       }
 

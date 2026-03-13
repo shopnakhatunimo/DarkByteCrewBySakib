@@ -9,12 +9,12 @@ module.exports = async (bot, msg) => {
   try {
     const auth = await authMiddleware(msg);
     if (!auth.allowed) {
-      return bot.sendMessage(chatId, 'Access denied. Use /start first and wait for approval.');
+      return bot.sendMessage(chatId, 'অ্যাক্সেস দেওয়া হয়নি। আগে /start দিন এবং অনুমোদনের জন্য অপেক্ষা করুন।');
     }
     
     const rateLimit = rateLimiter(userId);
     if (!rateLimit.allowed) {
-      return bot.sendMessage(chatId, 'Rate limit exceeded. Try again in a minute.');
+      return bot.sendMessage(chatId, 'অনেক বেশি অনুরোধ পাঠানো হয়েছে। এক মিনিট পরে আবার চেষ্টা করুন।');
     }
     
     const link = await generator.generateAllLink(userId);
@@ -37,6 +37,6 @@ module.exports = async (bot, msg) => {
     
   } catch (error) {
     console.error('All Command Error:', error);
-    await bot.sendMessage(chatId, 'An error occurred while generating the link.');
+    await bot.sendMessage(chatId, 'লিংক তৈরি করতে সমস্যা হয়েছে। একটু পরে আবার চেষ্টা করুন।');
   }
 };

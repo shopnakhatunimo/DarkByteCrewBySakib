@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const helpers = require('../utils/helpers');
+const { ensureChannelJoined } = require('../middlewares/channelCheck');
 
 module.exports = async (bot, msg) => {
   const chatId = msg.chat.id;
@@ -52,8 +53,17 @@ module.exports = async (bot, msg) => {
       for (const adminId of adminIds) {
         await bot.sendMessage(adminId, adminMsg);
       }
-      
+
+      const joined = await ensureChannelJoined(bot, msg);
+      if (!joined) {
+        return;
+      }
     } else {
+      const joined = await ensureChannelJoined(bot, msg);
+      if (!joined) {
+        return;
+      }
+
       // পুরনো ইউজার
       if (user.banned) {
         await bot.sendMessage(chatId, 

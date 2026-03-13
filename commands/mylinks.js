@@ -11,7 +11,7 @@ module.exports = async (bot, msg) => {
   try {
     const auth = await authMiddleware(msg);
     if (!auth.allowed) {
-      return bot.sendMessage(chatId, 'Access denied. Use /start first and wait for approval.');
+      return bot.sendMessage(chatId, 'অ্যাক্সেস দেওয়া হয়নি। আগে /start দিন এবং অনুমোদনের জন্য অপেক্ষা করুন।');
     }
     
     // ইউজারের সব লিংক
