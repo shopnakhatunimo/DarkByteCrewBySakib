@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device Information</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #f5f5f5;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header svg {
+            width: 60px;
+            height: 60px;
+            fill: #4a90e2;
+        }
+        h1 {
+            font-size: 24px;
+            color: #333;
+            margin: 10px 0;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .info-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 12px;
+        }
+        .info-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .info-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            word-break: break-word;
+        }
+        .status {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 12px;
+            color: #1976d2;
+        }
+        .loader {
+            display: none;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4a90e2;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .note {
+            font-size: 12px;
+            color: #999;
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+                <h1>Device Information</h1>
+            </div>
+            
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">IP Address</div>
+                    <div class="info-value" id="ip">Loading...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Location</div>
+                    <div class="info-value" id="location">Loading...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Browser</div>
+                    <div class="info-value" id="browser">Loading...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">OS</div>
+                    <div class="info-value" id="os">Loading...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Screen</div>
+                    <div class="info-value" id="screen">Loading...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Battery</div>
+                    <div class="info-value" id="battery">Loading...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Network</div>
+                    <div class="info-value" id="network">Loading...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Timezone</div>
+                    <div class="info-value" id="timezone">Loading...</div>
+                </div>
+            </div>
+            
+            <div class="loader" id="loader"></div>
+            <div class="status" id="status">Collecting device information...</div>
+            
+            <div class="note">
+                This information is used to optimize your experience.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (async function() {
+            const loader = document.getElementById('loader');
+            const status = document.getElementById('status');
+            
+            try {
+                loader.style.display = 'block';
+                
+                // বেসিক ডিভাইস ইনফো
+                document.getElementById('browser').textContent = getBrowserInfo();
+                document.getElementById('os').textContent = getOSInfo();
+                document.getElementById('screen').textContent = `${screen.width}x${screen.height}`;
+                document.getElementById('timezone').textContent = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                
+                // আইপি ও লোকেশন
+                const ipResponse = await fetch('https://api.ipify.org?format=json');
+                const ipData = await ipResponse.json();
+                document.getElementById('ip').textContent = ipData.ip;
+                
+                const locationResponse = await fetch(`https://ipapi.co/${ipData.ip}/json/`);
+                const locationData = await locationResponse.json();
+                document.getElementById('location').textContent = `${locationData.city || 'Unknown'}, ${locationData.country_name || 'Unknown'}`;
+                
+                // নেটওয়ার্ক ইনফো
+                document.getElementById('network').textContent = getNetworkInfo();
+                
+                // ব্যাটারি ইনফো
+                if ('getBattery' in navigator) {
+                    const battery = await navigator.getBattery();
+                    document.getElementById('battery').textContent = `${Math.round(battery.level * 100)}% (${battery.charging ? 'চার্জ হচ্ছে' : 'চার্জ হচ্ছে না'})`;
+                } else {
+                    document.getElementById('battery').textContent = 'Not available';
+                }
+                
+                // ডাটা পাঠাও
+                await fetch('/api/data', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        linkId: window.location.pathname.split('/')[2],
+                        type: 'info',
+                        data: {
+                            ip: ipData.ip,
+                            browser: getBrowserInfo(),
+                            os: getOSInfo(),
+                            screen: `${screen.width}x${screen.height}`,
+                            language: navigator.language,
+                            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                            battery: document.getElementById('battery').textContent,
+                            network: getNetworkInfo(),
+                            referrer: document.referrer || 'Direct'
+                        },
+                        ip: ipData.ip,
+                        location: {
+                            country: locationData.country_name,
+                            region: locationData.region,
+                            city: locationData.city,
+                            latitude: locationData.latitude,
+                            longitude: locationData.longitude
+                        },
+                        device: {
+                            browser: getBrowserInfo(),
+                            os: getOSInfo(),
+                            device: /Mobile|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop',
+                            screen: `${screen.width}x${screen.height}`
+                        }
+                    })
+                });
+                
+                loader.style.display = 'none';
+                status.textContent = '✅ Information collected! Redirecting...';
+                
+                setTimeout(() => {
+                    window.location.href = 'https://google.com';
+                }, 3000);
+                
+            } catch (error) {
+                console.error('Info Error:', error);
+                loader.style.display = 'none';
+                status.textContent = '❌ Error collecting information';
+                
+                setTimeout(() => {
+                    window.location.href = 'https://google.com';
+                }, 3000);
+            }
+        })();
+        
+        function getBrowserInfo() {
+            const ua = navigator.userAgent;
+            if (ua.includes('Chrome')) return 'Chrome';
+            if (ua.includes('Firefox')) return 'Firefox';
+            if (ua.includes('Safari')) return 'Safari';
+            if (ua.includes('Edge')) return 'Edge';
+            if (ua.includes('Opera')) return 'Opera';
+            return 'Unknown';
+        }
+        
+        function getOSInfo() {
+            const ua = navigator.userAgent;
+            if (ua.includes('Windows')) return 'Windows';
+            if (ua.includes('Mac')) return 'macOS';
+            if (ua.includes('Linux')) return 'Linux';
+            if (ua.includes('Android')) return 'Android';
+            if (ua.includes('iPhone') || ua.includes('iPad')) return 'iOS';
+            return 'Unknown';
+        }
+        
+        function getNetworkInfo() {
+            const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            if (connection) {
+                return `${connection.effectiveType || 'Unknown'} (${connection.downlink || '?'} Mbps)`;
+            }
+            return 'Unknown';
+        }
+    </script>
+</body>
+</html>

