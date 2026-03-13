@@ -29,6 +29,7 @@ const pending = require('./admin/pending');
 const logs = require('./admin/logs');
 const clearlogs = require('./admin/clearlogs');
 const stats = require('./admin/stats');
+const uptime = require('./admin/uptime');
 
 const app = express();
 app.use(express.json());
@@ -76,6 +77,7 @@ async function sendHelp(bot, msg) {
     message += '/clearlogs_confirm\n';
     message += '/clearlogs_cancel\n';
     message += '/stats\n';
+    message += '/uptime\n';
   }
 
   await bot.sendMessage(chatId, message);
@@ -124,6 +126,7 @@ function createCommandRouter(bot) {
     clearlogs: (msg) => clearlogs.execute(bot, msg),
     clearlogs_confirm: (msg) => clearlogs.confirm(bot, msg),
     clearlogs_cancel: (msg) => clearlogs.cancel(bot, msg),
+    uptime: (msg) => uptime(bot, msg),
     stats: (msg) => {
       if (/\bexport\b/i.test(msg.text)) {
         return stats.export(bot, msg);
