@@ -23,6 +23,7 @@ const mylinks = require('./commands/mylinks');
 const users = require('./admin/users');
 const userinfo = require('./admin/userinfo');
 const ban = require('./admin/ban');
+const unban = require('./admin/unban');
 const approve = require('./admin/approve');
 const broadcast = require('./admin/broadcast');
 const pending = require('./admin/pending');
@@ -67,6 +68,7 @@ async function sendHelp(bot, msg) {
     message += '/users\n';
     message += '/userinfo <user_id|@username>\n';
     message += '/ban <user_id|@username> [reason]\n';
+    message += '/unban <user_id|@username>\n';
     message += '/approve <user_id|@username>\n';
     message += '/pending\n';
     message += '/broadcast <type> <message>\n';
@@ -112,6 +114,7 @@ function createCommandRouter(bot) {
     users: (msg) => users(bot, msg),
     userinfo: (msg) => userinfo(bot, msg),
     ban: (msg) => ban(bot, msg),
+    unban: (msg) => unban(bot, msg),
     approve: (msg) => approve(bot, msg),
     pending: (msg) => pending.execute(bot, msg),
     broadcast: (msg) => broadcast.execute(bot, msg),
@@ -137,7 +140,6 @@ function createCommandRouter(bot) {
 
   const notImplemented = new Set([
     'reject',
-    'unban',
     'approve_all',
     'reject_all',
     'makeadmin',
