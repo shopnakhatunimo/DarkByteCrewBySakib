@@ -10,10 +10,14 @@ module.exports = async (bot, msg) => {
   
   try {
     const auth = await authMiddleware(msg);
-    if (!auth.allowed) return;
+    if (!auth.allowed) {
+      return bot.sendMessage(chatId, 'Access denied. Use /start first and wait for approval.');
+    }
     
     const rateLimit = rateLimiter(userId);
-    if (!rateLimit.allowed) return;
+    if (!rateLimit.allowed) {
+      return bot.sendMessage(chatId, 'Rate limit exceeded. Try again in a minute.');
+    }
     
     // URL এক্সট্রাক্ট
     const urlMatch = text.match(/\/custom\s+(https?:\/\/[^\s]+)/);

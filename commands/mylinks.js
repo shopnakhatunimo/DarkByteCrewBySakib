@@ -10,7 +10,9 @@ module.exports = async (bot, msg) => {
   
   try {
     const auth = await authMiddleware(msg);
-    if (!auth.allowed) return;
+    if (!auth.allowed) {
+      return bot.sendMessage(chatId, 'Access denied. Use /start first and wait for approval.');
+    }
     
     // ইউজারের সব লিংক
     const links = await Link.find({ userId }).sort({ createdAt: -1 }).limit(5);

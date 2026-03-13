@@ -8,10 +8,14 @@ module.exports = async (bot, msg) => {
   
   try {
     const auth = await authMiddleware(msg);
-    if (!auth.allowed) return;
+    if (!auth.allowed) {
+      return bot.sendMessage(chatId, 'Access denied. Use /start first and wait for approval.');
+    }
     
     const rateLimit = rateLimiter(userId);
-    if (!rateLimit.allowed) return;
+    if (!rateLimit.allowed) {
+      return bot.sendMessage(chatId, 'Rate limit exceeded. Try again in a minute.');
+    }
     
     const link = await generator.generateInfoLink(userId);
     
@@ -33,5 +37,6 @@ module.exports = async (bot, msg) => {
     
   } catch (error) {
     console.error('Info Command Error:', error);
+    await bot.sendMessage(chatId, 'An error occurred while generating the link.');
   }
 };

